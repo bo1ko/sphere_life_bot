@@ -20,6 +20,12 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tg_id = mapped_column(BigInteger) 
 
+class Admin(Base):
+    __tablename__ = 'admins'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    admin_id = mapped_column(BigInteger)
+
 
 async def async_main():
     async with engine.begin() as conn:
