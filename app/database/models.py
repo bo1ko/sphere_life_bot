@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import BigInteger, String, ForeignKey, DateTime, func
+from sqlalchemy import BigInteger, String, ForeignKey, DateTime, func, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from dotenv import load_dotenv
@@ -26,6 +26,13 @@ class Admin(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     admin_id = mapped_column(BigInteger)
 
+class Media(Base):
+    __tablename__ = 'media'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    media_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    media_desc: Mapped[str] = mapped_column(Text)
+    media_link: Mapped[str] = mapped_column(String(150), nullable=False)
 
 async def async_main():
     async with engine.begin() as conn:
