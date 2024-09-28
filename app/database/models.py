@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import BigInteger, String, ForeignKey, DateTime, func, Text, Boolean
+from sqlalchemy import BigInteger, String, DateTime, func, Text, Boolean, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from dotenv import load_dotenv
@@ -20,13 +20,32 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tg_id: Mapped[BigInteger] = mapped_column(BigInteger) 
     username: Mapped[str] = mapped_column(String(52), nullable=False)
-    is_admin: Mapped[Boolean] = mapped_column(Boolean, default=False)
+    is_admin: Mapped[Boolean] = mapped_column(Boolean, default=False, nullable=False)
+    ask_city: Mapped[Boolean] = mapped_column(Boolean, default=False, nullable=False)
+    ask_subscribe: Mapped[Boolean] = mapped_column(Boolean, default=False, nullable=False)
+
+class Location(Base):
+    __tablename__ = 'locations'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    city_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    city_name_ru: Mapped[str] = mapped_column(String(64), nullable=False)
+    address: Mapped[str] = mapped_column(String(124), nullable=False)
+    maps_url: Mapped[str] = mapped_column(String(162), nullable=False)
+
+class Service(Base):
+    __tablename__ = 'services'
+
+    city_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    title: Mapped[str] = mapped_column(String(124), nullable=False)
+    short_desc: Mapped[str] = mapped_column(String(162), nullable=False)
 
 class City(Base):
     __tablename__ = 'cities'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
+    count: Mapped[int] = mapped_column(Integer(), default=1)
 
 class Media(Base):
     __tablename__ = 'media'

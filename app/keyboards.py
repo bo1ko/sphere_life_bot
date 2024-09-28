@@ -12,6 +12,11 @@ main = ReplyKeyboardMarkup(keyboard=[
     ], resize_keyboard=True, input_field_placeholder='Виберіть пункт меню...'
 )
 
+back_to_questions = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text='Назад до питань', callback_data='back_to_questions')]
+    ]
+)
+
 async def media_list():
     all_media = await get_media()
     keyboard = InlineKeyboardBuilder()
