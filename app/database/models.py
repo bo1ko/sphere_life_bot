@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import BigInteger, String, ForeignKey, DateTime, func, Text
+from sqlalchemy import BigInteger, String, ForeignKey, DateTime, func, Text, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from dotenv import load_dotenv
@@ -18,13 +18,15 @@ class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    tg_id = mapped_column(BigInteger) 
+    tg_id: Mapped[BigInteger] = mapped_column(BigInteger) 
+    username: Mapped[str] = mapped_column(String(52), nullable=False)
+    is_admin: Mapped[Boolean] = mapped_column(Boolean, default=False)
 
-class Admin(Base):
-    __tablename__ = 'admins'
+class City(Base):
+    __tablename__ = 'cities'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    admin_id = mapped_column(BigInteger)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
 
 class Media(Base):
     __tablename__ = 'media'
