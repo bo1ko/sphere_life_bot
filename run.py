@@ -14,9 +14,11 @@ from app.common.bot_cmds_list import private
 
 load_dotenv()
 
+bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+
 async def main():
     await async_main()
-    bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
     dp = Dispatcher()
     dp.include_router(user_router)

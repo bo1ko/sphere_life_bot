@@ -36,9 +36,11 @@ class Location(Base):
 class Service(Base):
     __tablename__ = 'services'
 
-    city_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(124), nullable=False)
     short_desc: Mapped[str] = mapped_column(String(162), nullable=False)
+    long_desc: Mapped[str] = mapped_column(Text, nullable=False)
+    service_url: Mapped[str] = mapped_column(String(162), nullable=False)
 
 class City(Base):
     __tablename__ = 'cities'
@@ -52,7 +54,6 @@ class Media(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     media_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    media_desc: Mapped[str] = mapped_column(Text)
     media_link: Mapped[str] = mapped_column(String(150), nullable=False)
 
 async def async_main():
