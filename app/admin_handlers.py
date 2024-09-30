@@ -3,10 +3,10 @@ from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from app.keyboards import answer
+# from app.keyboards import answer
 from app.middlewares import AdminCheckMiddleware
 
-import validators
+# import validators
 import app.database.requests as rq
 
 
@@ -17,11 +17,11 @@ class Admin(StatesGroup):
     add_user = State()
     remove_user = State()
 
-class Media(StatesGroup):
-    add_name = State()
-    add_url = State()
-
-    remove_name = State()
+# class Media(StatesGroup):
+#     add_name = State()
+#     add_url = State()
+#
+#     remove_name = State()
 
 #  Add admin / Ask username
 @router.message(Command('add_admin'), flags={'admin_required': True})
@@ -75,48 +75,53 @@ async def cmd_show_admin_list(message: types.Message, state: FSMContext):
 
     await message.answer(f'Список адміністраторів:\n\n{admin_str}')
 
-#  Add media
-@router.message(Command('add_media'), flags={'admin_required': True})
-async def cmd_add_media(message: types.Message, state: FSMContext):
-    await message.answer('Введіть назву медіа:')
-    await state.set_state(Media.add_name)
+#  Refresh
+@router.message(Command('refresh'), flags={'admin_required': True})
+async def cmd_refresh(message: types.Message):
 
-@router.message(Media.add_name)
-async def add_media_name(message: types.Message, state: FSMContext):
-    await state.update_data(name=message.text)
-    await message.answer('Тепер введіть URL:')
-    await state.set_state(Media.add_url)
 
-@router.message(Media.add_url)
-async def add_media_url(message: types.Message, state: FSMContext):
-    if not validators.url(message.text):
-        await message.answer("Некоректний URL. Будь ласка, введіть правильний URL")
-        await state.clear()
-        return
-
-    await state.update_data(url=message.text)
-
-    media_data = await state.get_data()
-    location_name = media_data['name']
-    location_url = media_data['url']
-
-    await message.answer(f"Медіа додано:\n\nНазва: {location_name}\nURL: {location_url}")
-    await rq.add_media(location_name, location_url)
-    await state.clear()
-
-#  Remove media
-@router.message(Command('remove_media'), flags={'admin_required': True})
-async def cmd_remove_media(message: types.Message, state: FSMContext):
-    await message.answer('Введіть назву медіа')
-    await state.set_state(Media.remove_name)
-
-@router.message(Media.remove_name)
-async def remove_media_name(message: types.Message, state: FSMContext):
-    await state.update_data(name=message.text)
-    media_data = await state.get_data()
-    media = await rq.remove_media(media_data["name"])
-
-    if media:
-        await message.answer(f'Медіа "{media_data["name"]}" видалено')
-    else:
-        await message.answer(f'Медіа "{media_data["name"]}" не існує')
+# Add media
+# @router.message(Command('add_media'), flags={'admin_required': True})
+# async def cmd_add_media(message: types.Message, state: FSMContext):
+#     await message.answer('Введіть назву медіа:')
+#     await state.set_state(Media.add_name)
+#
+# @router.message(Media.add_name)
+# async def add_media_name(message: types.Message, state: FSMContext):
+#     await state.update_data(name=message.text)
+#     await message.answer('Тепер введіть URL:')
+#     await state.set_state(Media.add_url)
+#
+# @router.message(Media.add_url)
+# async def add_media_url(message: types.Message, state: FSMContext):
+#     if not validators.url(message.text):
+#         await message.answer("Некоректний URL. Будь ласка, введіть правильний URL")
+#         await state.clear()
+#         return
+#
+#     await state.update_data(url=message.text)
+#
+#     media_data = await state.get_data()
+#     location_name = media_data['name']
+#     location_url = media_data['url']
+#
+#     await message.answer(f"Медіа додано:\n\nНазва: {location_name}\nURL: {location_url}")
+#     await rq.add_media(location_name, location_url)
+#     await state.clear()
+#
+# #  Remove media
+# @router.message(Command('remove_media'), flags={'admin_required': True})
+# async def cmd_remove_media(message: types.Message, state: FSMContext):
+#     await message.answer('Введіть назву медіа')
+#     await state.set_state(Media.remove_name)
+#
+# @router.message(Media.remove_name)
+# async def remove_media_name(message: types.Message, state: FSMContext):
+#     await state.update_data(name=message.text)
+#     media_data = await state.get_data()
+#     media = await rq.remove_media(media_data["name"])
+#
+#     if media:
+#         await message.answer(f'Медіа "{media_data["name"]}" видалено')
+#     else:
+#         await message.answer(f'Медіа "{media_data["name"]}" не існує')
