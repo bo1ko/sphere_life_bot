@@ -69,7 +69,8 @@ async def post_availability(service_id, location_id, url=os.getenv("WIX_AVAILABI
                 "startDate": today.strftime('%Y-%m-%dT10:00:00'),
                 "endDate": next_month.strftime('%Y-%m-%dT17:30:00')
             }
-        }
+        },
+        "timezone": "Europe/Kyiv"
     }
 
     headers = await request_info()
@@ -80,9 +81,7 @@ async def post_availability(service_id, location_id, url=os.getenv("WIX_AVAILABI
     for slot in response['availabilityEntries']:
         slot = slot['slot']
         if slot['location']['id'] == location_id:
-            start_time = datetime.fromisoformat(slot['startDate'][:-1])
-            if start_time.hour >= 10:
-                api_availability_data.append(slot)
+            api_availability_data.append(slot)
 
 async def get_staff_data(url=os.getenv("WIX_STAFFS_URL")):
     global api_services_data
