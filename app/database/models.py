@@ -31,7 +31,7 @@ class Location(Base):
     city_name: Mapped[str] = mapped_column(String(64), nullable=False)
     city_name_ru: Mapped[str] = mapped_column(String(64), nullable=False)
     address: Mapped[str] = mapped_column(String(124), nullable=False)
-    maps_url: Mapped[str] = mapped_column(String(162), nullable=False)
+    map_url: Mapped[str] = mapped_column(String(162), nullable=False)
 
 class Service(Base):
     __tablename__ = 'services'
@@ -55,6 +55,13 @@ class Media(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     media_name: Mapped[str] = mapped_column(String(150), nullable=False)
     media_link: Mapped[str] = mapped_column(String(150), nullable=False)
+
+class QA(Base):
+    __tablename__ = 'qa'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
 
 async def async_main():
     async with engine.begin() as conn:

@@ -1,7 +1,7 @@
 from aiogram import types
 from app.database import requests as rq
 
-import app.keyboards as kb
+import app.keyboards.keyboards as kb
 
 async def city_check(locations, text='📍 Адреси, за якими ви можете нас знайти 📍\n\n'):
     count = 1

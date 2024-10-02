@@ -2,7 +2,7 @@ from app.database.requests import clear_tables, add_media, add_location, add_qa
 from app.utils.excel_data import get_excel_data
 from aiogram import types
 
-import app.keyboards as kb
+import app.keyboards.keyboards as kb
 
 
 async def update_data(target: types.Message):

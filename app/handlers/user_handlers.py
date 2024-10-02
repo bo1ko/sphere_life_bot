@@ -5,15 +5,14 @@ from aiogram.fsm.context import FSMContext
 
 import asyncio
 
-from app.utils.get_qa import get_data
-from app.utils.city import city_check
+from app.utils.handler_helpers import city_check, get_questions, send_questions_message
+from app.utils.wix_api import post_services_data, api_services_data
 
 import app.database.requests as rq
-import app.keyboards as kb
+import app.keyboards.keyboards as kb
 
 
 router = Router()
-data = get_data()
 
 class City(StatesGroup):
     is_right = State()
@@ -22,12 +21,6 @@ class City(StatesGroup):
 class Admin(StatesGroup):
     username = State()
 
-class Location(StatesGroup):
-    name = State()
-    name_ru = State()
-    address = State()
-    maps_url = State()
-
 
 #  /start
 @router.message(CommandStart())
@@ -35,7 +28,7 @@ async def cmd_start(message: types.Message):
     user = await rq.set_user(message.from_user.id, message.from_user.username)
     
     await message.answer('Ласкаво просимо до @spherelife_bot! 🤖')
-    if user.ask_subscribe == False:
+    if not user.ask_subscribe:
         await asyncio.sleep(1)
         await message.answer('😊 Для початку рекомендуємо підписатися на наш телеграм-канал @spherelife 📲', reply_markup=kb.subscribe)
         
@@ -56,6 +49,7 @@ async def cmd_menu(message: types.Message):
 #  Services
 @router.message(or_f(Command('services'), ('список процедур' == F.text.lower())))
 async def get_services(message: types.Message):
+    await post_services_data()
     await message.answer('📝 Список процедур 📝', reply_markup=await kb.service_list())
 
 @router.callback_query(F.data == 'back_to_service_list')
@@ -64,13 +58,13 @@ async def get_services(callback: types.CallbackQuery):
 
 @router.callback_query(F.data.startswith('service_'))
 async def get_service(callback: types.CallbackQuery):
-    service = await rq.get_service(int(callback.data.split('_')[1]))
-    await callback.message.edit_text(f'<b>{service.title}</b>\n<blockquote><i>{service.short_desc}</i></blockquote>', reply_markup=await kb.service_info(service.id))
+    service_index = int(callback.data.split('_')[1])
+    await callback.message.edit_text(f'<b>{api_services_data[service_index]['name']}</b>\n<blockquote><i>{api_services_data[service_index]['tagLine']}</i></blockquote>', reply_markup=await kb.service_info(service_index))
 
 @router.callback_query(F.data.startswith('more_info_'))
 async def get_more_info(callback: types.CallbackQuery):
-    service = await rq.get_service(int(callback.data.split('_')[-1]))
-    await callback.message.edit_text(f'<i><b>{service.title}</b></i>\n<blockquote><i>{service.short_desc}</i></blockquote>\n\n📝 Опис послуги 📝\n{service.long_desc}', reply_markup=await kb.back_to_service_info(service.id))
+    service_index = int(callback.data.split('_')[-1])
+    await callback.message.edit_text(f'<i><b>{api_services_data[service_index]['name']}</b></i>\n<blockquote><i>{api_services_data[service_index]['tagLine']}</i></blockquote>\n\n📝 Опис послуги 📝\n{api_services_data[service_index]['description']}', reply_markup=await kb.back_to_service_info(service_index))
 
 #  Locations
 @router.message(or_f(Command('locations'), ('наше місцезнаходження' == F.text.lower())))
@@ -107,19 +101,22 @@ async def check_city(message: types.Message, state: FSMContext):
 
 #  Questions&Answers
 @router.message(or_f(Command('questions'), ('відповіді на питання' == F.text.lower())))
-async def questions(message: types.Message):    
-    await message.answer('<b><i>📚❓ Відповіді на популярні запитання 📚❓</i></b>', reply_markup=await kb.question_list(data))
+async def questions(message: types.Message):
+    qa_set = await get_questions()
+    await send_questions_message(message, qa_set)
 
 #  Callback questions&answers
 @router.callback_query(F.data == 'back_to_questions')
-async def questions(callback: types.CallbackQuery):    
-    await callback.message.edit_text('<b><i>📚❓ Відповіді на популярні запитання 📚❓</i></b>', reply_markup=await kb.question_list(data))
+async def questions(callback: types.CallbackQuery):
+    qa_set = await get_questions()
+    await send_questions_message(callback, qa_set)
 
 @router.callback_query(F.data.startswith('qa_'))
 async def get_answer(callback: types.CallbackQuery):
-    await callback.message.edit_text(f'<b><i>{data[int(callback.data.split('_')[1])][0]}</i></b>\n\n{data[int(callback.data.split('_')[1])][1]}', reply_markup=kb.back_to_questions)
+    qa = await rq.get_qa(int(callback.data.split('_')[1]))
+    await callback.message.edit_text(f'<b><i>{qa.question}</i></b>\n\n{qa.answer}', reply_markup=kb.back_to_questions)
 
 #  Media
-@router.message(or_f(Command('our_media'), ('наші медіа' == F.text.lower())))
-async def our_media(message: types.Message):
+@router.message(or_f(Command('media'), ('наші медіа' == F.text.lower())))
+async def media(message: types.Message):
     await message.answer('Список наших медіа', reply_markup=await kb.media_list())

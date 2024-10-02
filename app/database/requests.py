@@ -1,5 +1,7 @@
+from oauthlib.uri_validate import query
+
 from app.database.models import async_session
-from app.database.models import User, Media, City, Location, Service
+from app.database.models import User, Media, City, Location, Service, QA
 from sqlalchemy import select, delete, or_, BigInteger
 
 
@@ -7,14 +9,14 @@ async def set_user(tg_id: BigInteger, username: str):
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
-        if not user:
+        if user:
+            if user.username != username:
+                user.username = username
+                await session.commit()
+        elif not user:
             session.add(User(tg_id=tg_id, username=username))
             await session.commit()
 
-        if user.username != username:
-            user.username = username
-            await session.commit()  
-        
         return user
 
 async def get_user(tg_id: int):
@@ -104,21 +106,45 @@ async def get_location(city_name: str):
         else:
             return False
 
+async def get_qa_set():
+    async with async_session() as session:
+        return await session.scalars(select(QA))
+
+async def get_qa(qa_id: int):
+    async with async_session() as session:
+        return await session.scalar(select(QA).where(QA.id == qa_id))
+
 async def get_media():
     async with async_session() as session:
         return await session.scalars(select(Media))
 
-async def add_media(name: str, url: str):
+async def clear_tables():
     async with async_session() as session:
-        session.add(Media(media_name=name, media_link=url))
+        async with session.begin():
+            await session.execute(delete(Location))
+            await session.execute(delete(Media))
+            await session.execute(delete(QA))
+
         await session.commit()
 
-async def remove_media(name: str):
+async def add_media(name: str, url: str):
     async with async_session() as session:
-        media = await session.execute(delete(Media).where(Media.media_name == name).returning(Media.id))
+        async with session.begin():
+            session.add(Media(media_name=name, media_link=url))
 
-        if media.scalar():
-            await session.commit()
-            return True
-        else:
-            return False
+        await session.commit()
+
+
+async def add_qa(question: str, answer: str):
+    async with async_session() as session:
+        async with session.begin():
+            session.add(QA(question=question, answer=answer))
+
+        await session.commit()
+
+async def add_location(city_name: str, city_name_ru: str, address: str, map_url: str):
+    async with async_session() as session:
+        async with session.begin():
+            session.add(Location(city_name=city_name, city_name_ru=city_name_ru, address=address, map_url=map_url))
+
+        await session.commit()
