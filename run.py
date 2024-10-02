@@ -9,6 +9,7 @@ from aiogram import Bot, Dispatcher, types
 from app.handlers.user_handlers import router as user_router
 from app.handlers.admin_handlers import router as admin_router
 from app.handlers.make_appointment_handlers import router as make_appointment_router
+from app.utils.wix_api import post_services_data
 from app.database.models import async_main
 from app.common.bot_cmds_list import private
 
@@ -25,6 +26,7 @@ async def main():
     dp.include_router(make_appointment_router)
     dp.include_router(admin_router)
 
+    await post_services_data()
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
     await dp.start_polling(bot)

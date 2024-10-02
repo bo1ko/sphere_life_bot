@@ -19,7 +19,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tg_id: Mapped[BigInteger] = mapped_column(BigInteger) 
-    username: Mapped[str] = mapped_column(String(52), nullable=False)
+    username: Mapped[str] = mapped_column(String(52))
     is_admin: Mapped[Boolean] = mapped_column(Boolean, default=False, nullable=False)
     ask_city: Mapped[Boolean] = mapped_column(Boolean, default=False, nullable=False)
     ask_subscribe: Mapped[Boolean] = mapped_column(Boolean, default=False, nullable=False)

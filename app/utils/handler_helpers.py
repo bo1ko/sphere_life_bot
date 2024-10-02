@@ -30,3 +30,15 @@ async def send_questions_message(target, qa_list):
         await target.answer(text, reply_markup=markup)
     elif isinstance(target, types.CallbackQuery):
         await target.message.edit_text(text, reply_markup=markup)
+
+async def choose_payment_type(api_services_data, service_index):
+    varied = api_services_data[service_index]['payment'].get('varied', {}).get('defaultPrice', {}).get('value', False)
+    fixed = api_services_data[service_index]['payment'].get('fixed', {}).get('price', {}).get('value', False)
+    custom = api_services_data[service_index]['payment'].get('custom', {}).get('description', False)
+
+    if varied:
+        return [varied, 0]
+    elif fixed:
+        return [fixed, 1]
+    elif custom:
+        return [custom, 2]

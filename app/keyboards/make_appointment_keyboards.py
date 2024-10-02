@@ -4,8 +4,7 @@ from datetime import datetime
 
 import locale
 
-from app.database.requests import get_media, get_services, get_service
-from app.utils.wix_api import api_services_data, api_availability_data
+from app.utils.wix_api import api_services_data
 
 
 locale.setlocale(locale.LC_ALL, 'uk_UA.UTF-8')
@@ -18,7 +17,7 @@ async def choose_location(service_id):
 
     return keyboard.adjust(1).as_markup()
 
-async def choose_date():
+async def choose_date(api_availability_data):
     keyboard = InlineKeyboardBuilder()
     day_list = []
 
@@ -33,7 +32,7 @@ async def choose_date():
 
     return keyboard.adjust(5).as_markup()
 
-async def choose_time(start_date):
+async def choose_time(start_date, api_availability_data):
     keyboard = InlineKeyboardBuilder()
 
     for day in api_availability_data:
@@ -46,9 +45,10 @@ async def choose_time(start_date):
 
     return keyboard.adjust(2).as_markup()
 
-async def choose_member(member):
+async def is_soldier():
     keyboard = InlineKeyboardBuilder()
-    keyboard.add(InlineKeyboardButton(text=member['name'], callback_data=f'member_{member['id']}'))
+    keyboard.add(InlineKeyboardButton(text='Так', callback_data=f'is_soldier_yes'))
+    keyboard.add(InlineKeyboardButton(text='Ні', callback_data=f'is_soldier_no'))
 
     return keyboard.adjust(1).as_markup()
 

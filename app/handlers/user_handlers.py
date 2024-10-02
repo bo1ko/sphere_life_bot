@@ -5,8 +5,8 @@ from aiogram.fsm.context import FSMContext
 
 import asyncio
 
-from app.utils.handler_helpers import city_check, get_questions, send_questions_message
-from app.utils.wix_api import post_services_data, api_services_data
+from app.utils.handler_helpers import city_check, get_questions, send_questions_message, choose_payment_type
+from app.utils.wix_api import api_services_data, fill_booking_data, clear_booking_data
 
 import app.database.requests as rq
 import app.keyboards.keyboards as kb
@@ -49,17 +49,43 @@ async def cmd_menu(message: types.Message):
 #  Services
 @router.message(or_f(Command('services'), ('список процедур' == F.text.lower())))
 async def get_services(message: types.Message):
-    await post_services_data()
     await message.answer('📝 Список процедур 📝', reply_markup=await kb.service_list())
 
 @router.callback_query(F.data == 'back_to_service_list')
 async def get_services(callback: types.CallbackQuery):
+    await clear_booking_data()
     await callback.message.edit_text('📝 Список процедур 📝', reply_markup=await kb.service_list())
 
 @router.callback_query(F.data.startswith('service_'))
 async def get_service(callback: types.CallbackQuery):
     service_index = int(callback.data.split('_')[1])
-    await callback.message.edit_text(f'<b>{api_services_data[service_index]['name']}</b>\n<blockquote><i>{api_services_data[service_index]['tagLine']}</i></blockquote>', reply_markup=await kb.service_info(service_index))
+    price = await choose_payment_type(api_services_data, service_index)
+
+    await fill_booking_data('fixed', False)
+
+    if price[1] == 2:
+        await fill_booking_data('price', 0)
+        await callback.message.edit_text(
+            f'<b>{api_services_data[service_index]['name']}</b>\n'
+            f'<blockquote><i>{api_services_data[service_index]['tagLine']}</i></blockquote>'
+            f'Ціна: {price[0]}\n',
+            reply_markup=await kb.service_info(service_index))
+    elif price[1] == 0:
+        await fill_booking_data('price', price[0])
+        await callback.message.edit_text(
+            f'<b>{api_services_data[service_index]['name']}</b>\n'
+            f'<blockquote><i>{api_services_data[service_index]['tagLine']}</i></blockquote>'
+            f'Ціна: {price[0]} грн.\n'
+            f'Військовим: {str(int(price[0]) / 2).split('.')[0]} грн.',
+            reply_markup=await kb.service_info(service_index))
+    elif price[1] == 1:
+        await fill_booking_data('price', price[0])
+        await fill_booking_data('fixed', True)
+        await callback.message.edit_text(
+            f'<b>{api_services_data[service_index]['name']}</b>\n'
+            f'<blockquote><i>{api_services_data[service_index]['tagLine']}</i></blockquote>'
+            f'Ціна: {price[0]} грн.\n',
+            reply_markup=await kb.service_info(service_index))
 
 @router.callback_query(F.data.startswith('more_info_'))
 async def get_more_info(callback: types.CallbackQuery):
