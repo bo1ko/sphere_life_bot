@@ -13,7 +13,7 @@ async def choose_location(service_id):
     keyboard = InlineKeyboardBuilder()
 
     for location in api_services_data[service_id]['locations']:
-        keyboard.add(InlineKeyboardButton(text=location['business']['name'], callback_data=f'location_service_{location['id']}'))
+        keyboard.add(InlineKeyboardButton(text=location['business']['name'], callback_data=f'location_service_{location["id"]}'))
 
     return keyboard.adjust(1).as_markup()
 
@@ -28,7 +28,7 @@ async def choose_date(api_availability_data):
             continue
 
         day_list.append(date_name.day)
-        keyboard.add(InlineKeyboardButton(text=f'{date_name.strftime('%d.%m')}', callback_data=f'day_{date['startDate']}'))
+        keyboard.add(InlineKeyboardButton(text=f'{date_name.strftime("%d.%m")}', callback_data=f'day_{date["startDate"]}'))
 
     return keyboard.adjust(5).as_markup()
 

@@ -1,10 +1,8 @@
-import requests
+import aiohttp
 import datetime
 import os
-
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -26,7 +24,6 @@ async def request_info():
         "Authorization": os.getenv("WIX_API_KEY"),
         "wix-site-id": os.getenv("WIX_SITE_ID"),
     }
-
     return headers
 
 async def post_services_data(url=os.getenv("WIX_SERVICES_URL")):
@@ -38,10 +35,11 @@ async def post_services_data(url=os.getenv("WIX_SERVICES_URL")):
 
     headers = await request_info()
 
-    response = requests.post(url, headers=headers, json=payload)
-    response = response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as response:
+            response_data = await response.json()
 
-    for service in response['services']:
+    for service in response_data['services']:
         api_services_data.append({
             'id': service['id'],
             'name': service['name'],
@@ -75,29 +73,33 @@ async def post_availability(service_id, location_id, url=os.getenv("WIX_AVAILABI
 
     headers = await request_info()
 
-    response = requests.post(url, headers=headers, json=payload)
-    response = response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as response:
+            response_data = await response.json()
 
-    for slot in response['availabilityEntries']:
+    for slot in response_data['availabilityEntries']:
         slot = slot['slot']
         if slot['location']['id'] == location_id:
             api_availability_data.append(slot)
+
 
 async def get_staff_data(url=os.getenv("WIX_STAFFS_URL")):
     global api_services_data
 
     headers = await request_info()
 
-    response = requests.get(url, headers=headers)
-    response = response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            response_data = await response.json()
 
-    for staff in response['resources']:
+    for staff in response_data['resources']:
         if staff['description']:
             api_staff_data.append({
                 'id': staff['id'],
                 'name': staff['name'],
                 'description': staff['description'],
             })
+
 
 async def get_price_data(service_id, resource_id, url=os.getenv("WIX_PRICE_URL")):
     payload = {
@@ -112,16 +114,18 @@ async def get_price_data(service_id, resource_id, url=os.getenv("WIX_PRICE_URL")
 
     headers = await request_info()
 
-    response = requests.post(url, headers=headers, json=payload)
-    response = response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=payload) as response:
+            response_data = await response.json()
 
-    free = response.get('priceDescriptionInfo', {}).get('original', False) == "Безкоштовно"
+    free = response_data.get('priceDescriptionInfo', {}).get('original', False) == "Безкоштовно"
     if free:
         return 'Безкоштовно'
     else:
-        return response['priceInfo']['calculatedPrice']
+        return response_data['priceInfo']['calculatedPrice']
 
-async def create_booking(name, slot, customer_name, customer_email):
+
+async def create_booking(name, slot, customer_name, customer_email, customer_phone):
     headers = await request_info()
     booking_data = {
         "booking": {
@@ -132,35 +136,42 @@ async def create_booking(name, slot, customer_name, customer_email):
             },
             "contactDetails": {
                 "firstName": customer_name,
-                "email": customer_email
+                "email": customer_email,
+                "phone": customer_phone,
             },
             "additionalFields": [],
             "totalParticipants": 1
         },
-        "sendSmsReminder": False,
+        "sendSmsReminder": True,
         "participantNotification": {
             "notifyParticipants": True
         },
     }
 
-    response = requests.post(os.getenv("WIX_CREATE_BOOKING"), headers=headers, json=booking_data)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(os.getenv("WIX_CREATE_BOOKING"), headers=headers, json=booking_data) as response:
+            response_status = response.status
+            response_data = await response.json()
 
-    await fill_booking_data('booking_id', response.json()['booking']['id'])
+    if response_status != 200:
+        return response_status
+
+    await fill_booking_data('booking_id', response_data['booking']['id'])
 
     status = await create_order()
-    print(api_booking_data)
 
     return status
 
+
 async def create_order():
     headers = await request_info()
-    price_amount = api_booking_data['price'] if api_booking_data['slot']['soldier'] == 'no' or api_booking_data['fixed'] == True else int(api_booking_data['price']) / 2
+    price_amount = api_booking_data['price'] if api_booking_data['data']['soldier'] == 'no' or api_booking_data['fixed'] == True else int(api_booking_data['price']) / 2
 
     order_data = {
         "order": {
             "buyerInfo": {
-                "firstName": api_booking_data['slot']['firstName'],
-                "email": api_booking_data['slot']['email'],
+                "firstName": api_booking_data['data']['firstName'],
+                "email": api_booking_data['data']['email'],
             },
             "priceSummary": {
                 "subtotal": {
@@ -178,14 +189,16 @@ async def create_order():
             },
             "billingInfo": {
                 "contactDetails": {
-                    "firstName": api_booking_data['slot']['firstName']
+                    "firstName": api_booking_data['data']['firstName'],
+                    "email": api_booking_data['data']['email'],
+                    "phone": api_booking_data['data']['phone']
                 }
             },
             "status": "APPROVED",
             "lineItems": [
                 {
                     "productName": {
-                        "original": api_booking_data['slot']['name']
+                        "original": api_booking_data['data']['name']
                     },
                     "catalogReference": {
                         "catalogItemId": api_booking_data['booking_id'],
@@ -225,9 +238,9 @@ async def create_order():
             }
         }
     }
-    print(order_data)
-    print('create_order')
-    response = requests.post("https://www.wixapis.com/ecom/v1/orders", headers=headers, json=order_data)
-    print(response.status_code)
-    print(response.text)
-    return response.status_code
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://www.wixapis.com/ecom/v1/orders", headers=headers, json=order_data) as response:
+            response_status = response.status
+
+    return response_status

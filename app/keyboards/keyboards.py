@@ -27,7 +27,9 @@ back_to_questions = InlineKeyboardMarkup(inline_keyboard=[
 
 async def back_to_service_info(service_index: int):
     keyboard = InlineKeyboardBuilder()
+    keyboard.add(InlineKeyboardButton(text='Записатися', callback_data=f'register_service_{service_index}'))
     keyboard.add(InlineKeyboardButton(text='Назад', callback_data=f'service_{service_index}'))
+    keyboard.add(InlineKeyboardButton(text='Список процедур', callback_data=f'back_to_service_list'))
 
     return keyboard.adjust(1).as_markup()
 async def service_list():
