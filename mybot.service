@@ -1,0 +1,13 @@
+[Unit]
+Description=My TG Bot
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/home/ubuntu/sphere_life_bot/.venv/bin/python /home/ubuntu/sphere_life_bot/run.py
+WorkingDirectory=/home/ubuntu/sphere_life_bot
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

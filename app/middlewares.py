@@ -9,11 +9,16 @@ class AdminCheckMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: Message, data: dict):
         admin_required = get_flag(data, 'admin_required', default=False)
 
-        if admin_required:
-            telegram_id = event.from_user.id
-            user = await rq.get_user(telegram_id)
+        telegram_id = event.from_user.id
+        username = event.from_user.username
 
-            if user and not user.is_admin:
+        user = await rq.get_user(telegram_id)
+            
+        if not user:
+            user = await rq.set_user(telegram_id, username)
+        
+        if admin_required and user:
+            if not user.is_admin:
                 return
 
         return await handler(event, data)

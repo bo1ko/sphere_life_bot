@@ -23,6 +23,10 @@ async def get_user(tg_id: int):
     async with async_session() as session:
         return await session.scalar(select(User).where(User.tg_id == tg_id))
 
+async def get_users():
+    async with async_session() as session:
+        return await session.scalars(select(User))
+
 async def add_admin(username: str):
     async with async_session() as session:
         user = await session.scalar(select(User).where(User.username == username))
@@ -78,6 +82,10 @@ async def set_city(city_name: str):
             city.count += 1
 
         await session.commit()
+
+async def get_cities():
+    async with async_session() as session:
+        return await session.scalars(select(City))
 
 async def update_ask_city(tg_id: int):
     async with async_session() as session:

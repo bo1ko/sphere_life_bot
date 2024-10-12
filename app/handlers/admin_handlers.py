@@ -2,6 +2,8 @@ from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.types import FSInputFile
+from openpyxl import Workbook
 
 from app.middlewares import AdminCheckMiddleware
 from app.utils.update_db import update_data
@@ -72,3 +74,65 @@ async def cmd_show_admin_list(message: types.Message, state: FSMContext):
 async def cmd_refresh(message: types.Message):
     await update_data(message)
 
+
+#  Get cities stats
+@router.message(Command('get_cities'), flags={'admin_required': True})
+async def cmd_get_city(message: types.Message):
+    cities_data = await rq.get_cities()
+    
+    cities_str = 'Місто'.ljust(15) + '| Кількість запитів\n'
+    cities_str += '-' * 35 + '\n' 
+
+    for city in cities_data:
+        cities_str += f'{city.name.ljust(15)}| {str(city.count).rjust(15)}\n'
+        
+    await message.answer(f'<pre>{cities_str}</pre>')
+
+@router.message(Command('export_cities'), flags={'admin_required': True})
+async def cmd_export_cities(message: types.Message):
+    cities_data = await rq.get_cities()
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Cities Data"
+
+    ws.append(['Місто', 'Кількість запитів'])
+
+    for city in cities_data:
+        ws.append([city.name, city.count])
+
+    file_path = 'cities_data.xlsx'
+    wb.save(file_path)
+
+    await message.answer_document(FSInputFile(file_path))
+
+#  Get users stats
+@router.message(Command('get_users'), flags={'admin_required': True})
+async def cmd_get_city(message: types.Message):
+    users_data = await rq.get_users()
+    
+    users_str = 'Телеграм айді'.ljust(15) + '| Нікнейн\n'
+    users_str += '-' * 35 + '\n' 
+
+    for user in users_data:
+        users_str += f'{str(user.tg_id).ljust(15)}| {str(user.username).rjust(15)}\n'
+        
+    await message.answer(f'<pre>{users_str}</pre>')
+
+@router.message(Command('export_users'), flags={'admin_required': True})
+async def cmd_export_cities(message: types.Message):
+    users_data = await rq.get_users()
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Users Data"
+
+    ws.append(['Телеграм айді', 'Нікнейн'])
+
+    for user in users_data:
+        ws.append([user.tg_id, user.username])
+
+    file_path = 'users_data.xlsx'
+    wb.save(file_path)
+
+    await message.answer_document(FSInputFile(file_path))

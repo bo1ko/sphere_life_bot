@@ -18,7 +18,7 @@ async def update_data(target: types.Message):
         await target.answer('Медіа успішно оновлені ✔')
 
         for i in data['locations']:
-            await add_location(i[0], i[1], i[2], i[3])
+            await add_location(i[0].lower(), i[1].lower(), i[2], i[3])
 
         await target.answer('Локації успішно оновлені ✔')
 
